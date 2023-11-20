@@ -255,15 +255,16 @@ def add_ref_trg(pkbm_buffer: PKBMBuffer, description: str, target: URI):
     except KeyError:
         ref_targets_map = generate_ref_targets_map(pkbm_buffer.buffer)
 
-    ref_trg_index = min(
-            str(index)
+    ref_trg_index = str(min(
+            index
             for index in range(len(ref_targets_map) + 1)
-            if bytes(str(index), encoding="utf-8") not in ref_targets_map
-    )
+            if str(index) not in ref_targets_map
+    ))
 
     buffer.append(f"[{ref_trg_index}]: {target!s}")
     # buffer[ref_trg_start:] = sorted(buffer[ref_trg_start:])
     ref_targets_map[ref_trg_index] = str(target)
+    buffer.vars["pkbm_markdown_ref_targets"] = ref_targets_map
     return ref_trg_index
 
 
