@@ -13,7 +13,7 @@ def get_context_pwd(
 ) -> str | None:
     context_pwd = None
     if buffer is not None:
-        if ((buffer.options["buftype"] == b"") and (buffer.name != "")):
+        if ((buffer.options["buftype"] == "") and (buffer.name != "")):
             context_pwd = str(Path(buffer.name).parent.resolve())
     if allow_pwd_context and (context_pwd is None):
         context_pwd = str(Path.cwd())

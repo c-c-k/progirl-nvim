@@ -17,6 +17,7 @@ from pkbm.utils import AttrDict
 
 from pkbm.pkbm.exceptions import CollectionError
 from pkbm.pkbm.utils import get_current_c_id
+from pkbm.pkbm.utils import get_c_id_by_path
 from pkbm.pkbm.utils import get_collection_by_c_id
 from pkbm.pkbm.utils import get_auto_id
 
@@ -91,12 +92,15 @@ class NoteInfo:
 
     def _resolve_dir_path(self):
         c_notes_path = self.collection.notes_path
-        buffer = self._vim.current.buffer if self._use_cb else None
-        context_pwd = get_context_pwd(buffer=buffer)
-        context_pwd = context_pwd if context_pwd is not None else c_notes_path
-        # if self._dir_path_str == "":
-        #     self._dir_path_str = context_pwd
-        # else:
+
+        if self._use_cb:
+            buffer = self._vim.current.buffer
+            buf_dir = get_context_pwd(buffer=buffer)
+            buf_c_id = get_c_id_by_path(buf_dir)
+            context_pwd = (buf_dir if buf_c_id == self._c_id else c_notes_path)
+        else:
+            context_pwd = c_notes_path
+
         self._dir_path_str = resolve_path_with_context(
                 self._dir_path_str,
                 context_pwd=context_pwd,
@@ -222,7 +226,7 @@ def create_initial_content_params(
 
 
 def edit_note(vim: pynvim.Nvim, title_args: list[str]):
-    note_info = create_note(vim, title_args, use_cb=False)
+    note_info = create_note(vim, title_args, use_cb=True)
     if note_info is None:
         vim.api.echo([["can not create/edit note from args: "], title_args],
                      True, {})
