@@ -141,18 +141,6 @@ class NoteInfo:
         return params
 
     def _create_path_uri(self):
-        # TODO: delete commented out code if everything works
-        # buffer_pwd = get_context_pwd()
-        # c_notes_path = self.collection.notes_path
-
-        # if buffer_pwd is not None:
-        #     if (buffer_pwd.startswith(collection_path) and (osp.commonpath(
-        #             (buffer_pwd, self._dir_path_str)) == buffer_pwd)):
-        #         path_str = self.path_str.replace(buffer_pwd, ".")
-
-        # if path_str is None:
-        #     path_str = self.path_str.replace(collection_path, "")
-
         prefix = osp.commonpath((self.collection.notes_path, self.path_str))
         path_str = self.path_str[len(prefix):]
         self.path_uri = URI(self._c_id, path_str)
