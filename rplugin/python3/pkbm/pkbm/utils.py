@@ -10,11 +10,21 @@ from pkbm.pkbm.exceptions import CollectionError
 from pkbm.utils import AttrDict
 
 
-def get_auto_id(vim: pynvim.Nvim, c_id: str) -> str:
+def get_collection_auto_id(c_id: str) -> str:
     collection = get_collection_by_c_id(c_id)
     c_path = Path(collection.path)
     id_file_path = c_path.joinpath(".pkb/next_id")
-    id_temp_file_path = c_path.joinpath(".pkb/next_id~")
+    return get_auto_id(id_file_path)
+
+
+def get_dir_auto_id(dir_path_str: str) -> str:
+    dir_path = Path(dir_path_str)
+    id_file_path = dir_path.joinpath(".next_id")
+    return get_auto_id(id_file_path)
+
+
+def get_auto_id(id_file_path: Path) -> str:
+    id_temp_file_path = Path(id_file_path.as_posix() + "~")
 
     if not id_file_path.exists() and not id_temp_file_path.exists():
         id_file_path.parent.mkdir(exist_ok=True, parents=True)
@@ -30,12 +40,12 @@ def get_auto_id(vim: pynvim.Nvim, c_id: str) -> str:
     else:
         raise OSError(f"can't access {id_file_path!s} to get auto id")
 
-    auto_id = id_temp_file_path.read_text()
-    next_id = str(int(auto_id) + 1)
+    auto_id = id_temp_file_path.read_text().strip()
+    next_id = str(hex(int(auto_id, 16) + 1)[2:])
     id_temp_file_path.write_text(next_id)
     id_temp_file_path.rename(id_file_path)
 
-    return f"{auto_id:>08}"
+    return f"{auto_id:>04}"
 
 
 def get_collection_by_c_id(c_id: str) -> AttrDict:

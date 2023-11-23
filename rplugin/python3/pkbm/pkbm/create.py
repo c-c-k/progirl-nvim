@@ -19,11 +19,13 @@ from pkbm.pkbm.exceptions import CollectionError
 from pkbm.pkbm.utils import get_current_c_id
 from pkbm.pkbm.utils import get_c_id_by_path
 from pkbm.pkbm.utils import get_collection_by_c_id
-from pkbm.pkbm.utils import get_auto_id
+from pkbm.pkbm.utils import get_dir_auto_id
 
 LEGAL_CHARACTERS = string.ascii_lowercase + string.digits + "._"
 PATTERN_TAGS_LINE = re.compile(r"^[<>!-\\#/* \t]*@tags: *(?P<TAGS>.*)$")
 PATTERN_TITLE_LINE = re.compile(r"^#(?P<TITLE>[^#].*)$")
+TEMP_PROJECT_CARD_TEMPLATE = '${AUTO_ID}-${TITLE_CLEAN}${EXTENSION}'
+TEMP_PATTERN_IS_PROJECT_CARD = re.compile(r"^.*projects/.*cards/?$")
 
 
 class NoteInfo:
@@ -117,7 +119,10 @@ class NoteInfo:
         self.title = " ".join(self._title_args)
 
     def _create_filename(self):
-        template_str = self.collection.filename_template
+        if TEMP_PATTERN_IS_PROJECT_CARD.match(self._dir_path_str):
+            template_str = TEMP_PROJECT_CARD_TEMPLATE
+        else:
+            template_str = self.collection.filename_template
 
         template_str = datetime.strftime(datetime.now(), template_str)
         template = string.Template(template_str)
@@ -136,7 +141,8 @@ class NoteInfo:
         params["TITLE_CLEAN"] = _clean_name(self.title)
         params["EXTENSION"] = _clean_name(self._extension)
         if use_auto_id:
-            params["AUTO_ID"] = get_auto_id(self._vim, self._c_id)
+            # params["AUTO_ID"] = get_collection_auto_id(self._c_id)
+            params["AUTO_ID"] = get_dir_auto_id(self._dir_path_str)
 
         return params
 
