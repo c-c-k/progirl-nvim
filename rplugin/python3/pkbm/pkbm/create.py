@@ -96,8 +96,10 @@ class NoteInfo:
         if self._use_cb:
             buffer = self._vim.current.buffer
             buf_dir = get_context_pwd(buffer=buffer)
-            buf_c_id = get_c_id_by_path(buf_dir)
-            context_pwd = (buf_dir if buf_c_id == self._c_id else c_notes_path)
+            buf_c_id = (
+                    get_c_id_by_path(buf_dir) if buf_dir is not None else None
+            )
+            context_pwd = buf_dir if buf_c_id == self._c_id else c_notes_path
         else:
             context_pwd = c_notes_path
 
