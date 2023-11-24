@@ -7,7 +7,6 @@ from typing import Pattern
 
 import pynvim
 from pynvim.api import Buffer
-from pynvim.api.buffer import Range
 
 from pkbm.buffer import PKBMBuffer
 from pkbm.uri import URI
@@ -224,21 +223,6 @@ def get_uri_at_cursor(vim: pynvim.Nvim) -> str | None:
     return uri
 
 
-def get_ref_src_range(pkbm_buffer: PKBMBuffer) -> Range:
-    buffer = pkbm_buffer.buffer
-    try:
-        links_start_line = buffer[:].index("## LINKS") + 2
-        assert buffer[links_start_line - 1] == ""
-        links_end_line = buffer[links_start_line:].index("") - 1
-    except (IndexError, AssertionError):
-        raise LinksError("Links section missing or malformed")
-
-    if links_end_line < links_start_line:
-        links_end_line = links_start_line
-
-    return buffer.range(links_start_line, links_end_line)
-
-
 def get_ref_trg_start(pkbm_buffer: PKBMBuffer) -> int:
     buffer = pkbm_buffer.buffer
     try:
@@ -269,9 +253,9 @@ def add_ref_trg(pkbm_buffer: PKBMBuffer, description: str, target: URI):
 
 
 def add_ref_src(pkbm_buffer: PKBMBuffer, description: str, ref_trg_index: str):
-    ref_src_range = get_ref_src_range(pkbm_buffer)
-    ref_src_range.append(f"- [{description}][{ref_trg_index}]")
-    ref_src_range[:] = sorted(ref_src_range[:])
+    vim = pkbm_buffer.vim
+    link_str = f"[{description}][{ref_trg_index}]"
+    vim.api.put([link_str], "c", True, True)
 
 
 def clean_description(description: str) -> str:

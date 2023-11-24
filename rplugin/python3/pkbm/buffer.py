@@ -61,6 +61,10 @@ class PKBMBuffer:
     def buffer(self) -> Buffer:
         return self._buffer
 
+    @property
+    def vim(self) -> pynvim.Nvim:
+        return self._vim
+
     def re(self, pattern: Pattern | str | None = None) -> PKBMBufferRe:
         self._re._do_search(pattern)
         return self._re
