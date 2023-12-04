@@ -6,20 +6,20 @@ import string
 
 import pynvim
 
-from pkbm.buffer import PKBMBuffer
-from pkbm.globals import config
-from pkbm.markdown import add_ref_link as md_add_ref_link
-from pkbm.path import get_context_pwd
-from pkbm.path import resolve_path_with_context
-from pkbm.path import touch_with_mkdir
-from pkbm.uri import URI
-from pkbm.utils import AttrDict
+from progirl.buffer import ProGirlBuffer
+from progirl.globals import config
+from progirl.markdown import add_ref_link as md_add_ref_link
+from progirl.path import get_context_pwd
+from progirl.path import resolve_path_with_context
+from progirl.path import touch_with_mkdir
+from progirl.uri import URI
+from progirl.utils import AttrDict
 
-from pkbm.pkbm.exceptions import CollectionError
-from pkbm.pkbm.utils import get_current_c_id
-from pkbm.pkbm.utils import get_c_id_by_path
-from pkbm.pkbm.utils import get_collection_by_c_id
-from pkbm.pkbm.utils import get_dir_auto_id
+from progirl.pkbm.exceptions import CollectionError
+from progirl.pkbm.utils import get_current_c_id
+from progirl.pkbm.utils import get_c_id_by_path
+from progirl.pkbm.utils import get_collection_by_c_id
+from progirl.pkbm.utils import get_dir_auto_id
 
 LEGAL_CHARACTERS = string.ascii_lowercase + string.digits + "._"
 PATTERN_TAGS_LINE = re.compile(r"^[<>!-\\#/* \t]*@tags: *(?P<TAGS>.*)$")
@@ -207,12 +207,12 @@ def create_initial_content_params(
     params: dict[str, str] = {}
 
     if use_cb:
-        pkbm_buffer = PKBMBuffer(vim)
+        progirl_buffer = ProGirlBuffer(vim)
         params["TITLE"] = (
                 note_info.title if note_info.title != "" else
-                pkbm_buffer.re(PATTERN_TITLE_LINE).group("TITLE")
+                progirl_buffer.re(PATTERN_TITLE_LINE).group("TITLE")
         )
-        params["TAGS"] = pkbm_buffer.re(PATTERN_TAGS_LINE).group("TAGS")
+        params["TAGS"] = progirl_buffer.re(PATTERN_TAGS_LINE).group("TAGS")
     else:
         params["TITLE"] = note_info.title
         params["TAGS"] = ""
@@ -234,10 +234,10 @@ def edit_note(vim: pynvim.Nvim, title_args: list[str]):
 
 def add_note_ref_link(vim: pynvim.Nvim, title_args: list[str]):
     note_info = create_note(vim, title_args, use_cb=True)
-    pkbm_buffer = PKBMBuffer(vim)
+    progirl_buffer = ProGirlBuffer(vim)
     if note_info is None:
         vim.api.echo([["can not create/find note from args: "], title_args],
                      True, {})
         return
 
-    md_add_ref_link(pkbm_buffer, note_info.title, note_info.path_uri)
+    md_add_ref_link(progirl_buffer, note_info.title, note_info.path_uri)

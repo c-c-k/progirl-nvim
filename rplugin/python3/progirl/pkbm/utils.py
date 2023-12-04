@@ -4,10 +4,10 @@ from time import sleep
 
 import pynvim
 
-from pkbm.path import resolve_path_with_context
-from pkbm.globals import config
-from pkbm.pkbm.exceptions import CollectionError
-from pkbm.utils import AttrDict
+from progirl.path import resolve_path_with_context
+from progirl.globals import config
+from progirl.pkbm.exceptions import CollectionError
+from progirl.utils import AttrDict
 
 
 def get_collection_auto_id(c_id: str) -> str:

@@ -8,8 +8,8 @@ from typing import Pattern
 import pynvim
 from pynvim.api import Buffer
 
-from pkbm.buffer import PKBMBuffer
-from pkbm.uri import URI
+from progirl.buffer import ProGirlBuffer
+from progirl.uri import URI
 
 
 class LinksError(Exception):
@@ -163,7 +163,7 @@ def extract_links_from_line(line: str) -> list[Link]:
 
 
 def get_ref_target(buffer: Buffer, src_target: str) -> str:
-    ref_targets_map = buffer.vars.get("pkbm_markdown_ref_targets", {})
+    ref_targets_map = buffer.vars.get("progirl_markdown_ref_targets", {})
     ref_target = ref_targets_map.get(src_target, None)
     if ref_target is None:
         ref_targets_map = generate_ref_targets_map(buffer)
@@ -210,7 +210,7 @@ def generate_ref_targets_map(buffer: Buffer) -> dict[str, str]:
         link, _ = find_link(line, link_patterns)
         if link is not None:
             ref_targets_map[link.name] = link.target
-    buffer.vars["pkbm_markdown_ref_targets"] = ref_targets_map
+    buffer.vars["progirl_markdown_ref_targets"] = ref_targets_map
     return ref_targets_map
 
 
@@ -223,21 +223,21 @@ def get_uri_at_cursor(vim: pynvim.Nvim) -> str | None:
     return uri
 
 
-def get_ref_trg_start(pkbm_buffer: PKBMBuffer) -> int:
-    buffer = pkbm_buffer.buffer
+def get_ref_trg_start(progirl_buffer: ProGirlBuffer) -> int:
+    buffer = progirl_buffer.buffer
     try:
         return buffer[:].index("<!--LINK TARGETS-->") + 1
     except IndexError:
         raise LinksError("Link targets section missing")
 
 
-def add_ref_trg(pkbm_buffer: PKBMBuffer, description: str, target: URI):
-    buffer = pkbm_buffer.buffer
-    # ref_trg_start = get_ref_trg_start(pkbm_buffer)
+def add_ref_trg(progirl_buffer: ProGirlBuffer, description: str, target: URI):
+    buffer = progirl_buffer.buffer
+    # ref_trg_start = get_ref_trg_start(progirl_buffer)
     try:
-        ref_targets_map = buffer.vars["pkbm_markdown_ref_targets"]
+        ref_targets_map = buffer.vars["progirl_markdown_ref_targets"]
     except KeyError:
-        ref_targets_map = generate_ref_targets_map(pkbm_buffer.buffer)
+        ref_targets_map = generate_ref_targets_map(progirl_buffer.buffer)
 
     ref_trg_index = str(min(
             index
@@ -248,12 +248,12 @@ def add_ref_trg(pkbm_buffer: PKBMBuffer, description: str, target: URI):
     buffer.append(f"[{ref_trg_index}]: {target!s}")
     # buffer[ref_trg_start:] = sorted(buffer[ref_trg_start:])
     ref_targets_map[ref_trg_index] = str(target)
-    buffer.vars["pkbm_markdown_ref_targets"] = ref_targets_map
+    buffer.vars["progirl_markdown_ref_targets"] = ref_targets_map
     return ref_trg_index
 
 
-def add_ref_src(pkbm_buffer: PKBMBuffer, description: str, ref_trg_index: str):
-    vim = pkbm_buffer.vim
+def add_ref_src(progirl_buffer: ProGirlBuffer, description: str, ref_trg_index: str):
+    vim = progirl_buffer.vim
     link_str = f"[{description}][{ref_trg_index}]"
     vim.api.put([link_str], "c", True, True)
 
@@ -265,7 +265,7 @@ def clean_description(description: str) -> str:
     )
 
 
-def add_ref_link(pkbm_buffer: PKBMBuffer, description: str, target: URI):
+def add_ref_link(progirl_buffer: ProGirlBuffer, description: str, target: URI):
     cleaned_description = clean_description(description)
-    ref_trg_index = add_ref_trg(pkbm_buffer, cleaned_description, target)
-    add_ref_src(pkbm_buffer, cleaned_description, ref_trg_index)
+    ref_trg_index = add_ref_trg(progirl_buffer, cleaned_description, target)
+    add_ref_src(progirl_buffer, cleaned_description, ref_trg_index)

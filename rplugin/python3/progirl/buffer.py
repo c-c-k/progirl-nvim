@@ -7,7 +7,7 @@ from pynvim.api import Buffer
 VALID_PATH_PATTERN: Pattern = re.compile(r"^[\w./-]+$")
 
 
-class PKBMBufferRe:
+class ProGirlBufferRe:
     _buffer: Buffer
     _last_match: re.Match | None
     _last_match_line_num: int | None
@@ -48,14 +48,14 @@ class PKBMBufferRe:
         return lml_num if lml_num is not None else default
 
 
-class PKBMBuffer:
+class ProGirlBuffer:
     _buffer: Buffer
-    _re: PKBMBufferRe
+    _re: ProGirlBufferRe
 
     def __init__(self, vim: pynvim.Nvim, buffer: Buffer | None = None):
         self._vim = vim
         self._buffer = buffer if buffer is not None else vim.current.buffer
-        self._re = PKBMBufferRe(self._buffer)
+        self._re = ProGirlBufferRe(self._buffer)
 
     @property
     def buffer(self) -> Buffer:
@@ -65,6 +65,6 @@ class PKBMBuffer:
     def vim(self) -> pynvim.Nvim:
         return self._vim
 
-    def re(self, pattern: Pattern | str | None = None) -> PKBMBufferRe:
+    def re(self, pattern: Pattern | str | None = None) -> ProGirlBufferRe:
         self._re._do_search(pattern)
         return self._re

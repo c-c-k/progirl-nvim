@@ -2,12 +2,12 @@ from enum import Enum, auto
 
 import pynvim
 
-from pkbm.markdown import get_uri_at_cursor
+from progirl.markdown import get_uri_at_cursor
 from .handle import handle_uri
 from .resolve import resolve_uri_as_path
-from pkbm.path import get_context_pwd
-from pkbm.path import touch_with_mkdir
-from pkbm.uri import URI
+from progirl.path import get_context_pwd
+from progirl.path import touch_with_mkdir
+from progirl.uri import URI
 
 
 class GotoMethod(Enum):

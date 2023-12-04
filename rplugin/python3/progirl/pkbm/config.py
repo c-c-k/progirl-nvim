@@ -3,9 +3,9 @@ import re
 
 import pynvim
 
-from pkbm.globals import config
-from pkbm.path import resolve_path_with_context
-from pkbm.utils import AttrDict
+from progirl.globals import config
+from progirl.path import resolve_path_with_context
+from progirl.utils import AttrDict
 from .exceptions import CollectionError
 
 _DEFAULT_COLLECTION = {
@@ -27,7 +27,7 @@ _PATTERN_VALID_COLLECTION_NAME = re.compile(r"[a-z0-9_]+")
 def load_config(vim: pynvim.Nvim):
     config.clear()
 
-    config.pkb_prefix = vim.vars.get("pkbm_pkb_prefix", "pkb-")
+    config.pkb_prefix = vim.vars.get("progirl_pkb_prefix", "pkb-")
     load_collections_config(vim)
 
     return config
@@ -93,7 +93,7 @@ def get_c_id(collection: AttrDict) -> str:
 
 
 def load_collections_config(vim: pynvim.Nvim):
-    collections_list = vim.vars.get("pkbm_collections", [])
+    collections_list = vim.vars.get("progirl_collections", [])
 
     if collections_list != []:
         collections = {

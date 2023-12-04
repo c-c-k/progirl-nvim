@@ -3,7 +3,7 @@ from time import sleep
 
 import pynvim
 
-from pkbm.uri import URI
+from progirl.uri import URI
 
 
 def handle_uri(vim: pynvim.Nvim, uri: URI):

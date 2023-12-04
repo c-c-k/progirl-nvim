@@ -2,9 +2,9 @@ from importlib import import_module
 
 import pynvim
 
-from pkbm.path import validate_path
-from pkbm.path import resolve_path_with_context
-from pkbm.uri import URI
+from progirl.path import validate_path
+from progirl.path import resolve_path_with_context
+from progirl.uri import URI
 
 DEFAULT_RESOLVER_PROTOCOLS: list[str] = ["file", "local", ""]
 
@@ -32,7 +32,7 @@ def resolve_uri_as_path(
         context_pwd: str | None = None
 ) -> str | None:
     path = None
-    uri_resolvers = vim.vars.get("pkbm_uri_resolvers", [])
+    uri_resolvers = vim.vars.get("progirl_uri_resolvers", [])
     for resolver in uri_resolvers:
         path = try_resolve(vim, resolver, uri, context_pwd)
         if path is not None:

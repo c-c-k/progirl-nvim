@@ -1,9 +1,9 @@
 import pynvim
 
-from pkbm.path import validate_path
-from pkbm.path import resolve_path_with_context
-from pkbm.uri import URI
-from pkbm.globals import config
+from progirl.path import validate_path
+from progirl.path import resolve_path_with_context
+from progirl.uri import URI
+from progirl.globals import config
 
 from .utils import get_current_collection
 
