@@ -3,6 +3,7 @@ import os.path as osp
 from pathlib import Path
 import re
 import string
+import typing as t
 
 import pynvim
 
@@ -21,10 +22,11 @@ from progirl.pkbm.utils import get_c_id_by_path
 from progirl.pkbm.utils import get_collection_by_c_id
 from progirl.pkbm.utils import get_dir_auto_id
 
-LEGAL_CHARACTERS = string.ascii_lowercase + string.digits + "._"
+TITLE_LEGAL_CHARACTERS = string.ascii_lowercase + string.digits + "._"
+TAG_LEGAL_CHARACTERS = string.ascii_lowercase + string.digits + "-"
 PATTERN_TAGS_LINE = re.compile(r"^[<>!-\\#/* \t]*@tags: *(?P<TAGS>.*)$")
 PATTERN_TITLE_LINE = re.compile(r"^#(?P<TITLE>[^#].*)$")
-TEMP_PROJECT_CARD_TEMPLATE = '${AUTO_ID}-${TITLE_CLEAN}${EXTENSION}'
+TEMP_PROJECT_CARD_TEMPLATE = '${AUTO_ID}-${TITLE_CLEAN}'
 TEMP_PATTERN_IS_PROJECT_CARD = re.compile(r"^.*projects/.*cards/?$")
 
 
@@ -32,10 +34,11 @@ class NoteInfo:
     path_str: str
     path_uri: URI
     title: str
+    base_filename: str
+    extension: str
+    filename: str
     _c_id: str
     _dir_path_str: str
-    _extension: str
-    _filename: str
     _title_words: list[str]
     _use_cb: bool
     _vim: pynvim.Nvim
@@ -88,9 +91,9 @@ class NoteInfo:
         if (  # yapf hack
                 (len(self._title_args) > 0)
                 and (self._title_args[-1].find(".") == 0)):
-            self._extension = self._title_args.pop()
+            self.extension = self._title_args.pop()
         else:
-            self._extension = ""
+            self.extension = ""
 
     def _resolve_dir_path(self):
         c_notes_path = self.collection.notes_path
@@ -112,8 +115,9 @@ class NoteInfo:
         )
 
     def _resolve_extension(self):
-        if self._extension == "":
-            self._extension = self.collection.extension
+        if self.extension == "":
+            self.extension = self.collection.extension
+        self.extension = clean_title(self.extension.lstrip("."))
 
     def _create_title(self):
         self.title = " ".join(self._title_args)
@@ -129,17 +133,17 @@ class NoteInfo:
 
         use_auto_id = "${AUTO_ID}" in template_str
         params = self._create_filename_params(use_auto_id=use_auto_id)
-        self._filename = template.substitute(params)
+        self.base_filename = template.substitute(params)
+        self.filename = ".".join((self.base_filename, self.extension))
 
     def _create_path_str(self):
         self.path_str = resolve_path_with_context(
-                self._filename, context_pwd=self._dir_path_str
+                self.filename, context_pwd=self._dir_path_str
         )
 
     def _create_filename_params(self, use_auto_id: bool) -> dict[str, str]:
         params = {}
-        params["TITLE_CLEAN"] = _clean_name(self.title)
-        params["EXTENSION"] = _clean_name(self._extension)
+        params["TITLE_CLEAN"] = clean_title(self.title)
         if use_auto_id:
             # params["AUTO_ID"] = get_collection_auto_id(self._c_id)
             params["AUTO_ID"] = get_dir_auto_id(self._dir_path_str)
@@ -151,16 +155,45 @@ class NoteInfo:
         path_str = self.path_str[len(prefix):]
         self.path_uri = URI(self._c_id, path_str)
 
+    @property
+    def id_(self) -> str:
+        return self.path_uri.body
 
-def _clean_name(name: str) -> str:
+
+def clean_tag(name: str) -> str:
+    return _clean_string(
+            name=name,
+            valid_chars=TAG_LEGAL_CHARACTERS,
+            filler_char="-",
+            preprocessor=lambda s: s.lower()
+    )
+
+
+def clean_title(name: str) -> str:
+    return _clean_string(
+            name=name,
+            valid_chars=TITLE_LEGAL_CHARACTERS,
+            filler_char="_",
+            preprocessor=lambda s: s.lower()
+    )
+
+
+def _clean_string(
+        name: str, valid_chars: str, filler_char: str,
+        preprocessor: t.Callable | None
+) -> str:
+    if preprocessor is not None:
+        name = preprocessor(name)
+
     last_char = ""
     cleaned_chars = []
-    for char in name.lower():
-        cleaned_char = char if char in LEGAL_CHARACTERS else "_"
-        if not (cleaned_char == "_" and last_char == "_"):
+    for char in name:
+        cleaned_char = char if char in valid_chars else filler_char
+        if not (cleaned_char == filler_char and last_char == filler_char):
             cleaned_chars.append(cleaned_char)
             last_char = cleaned_char
-    return "".join(cleaned_chars).strip("_")
+
+    return "".join(cleaned_chars).strip(filler_char)
 
 
 def create_note(
@@ -201,21 +234,43 @@ def create_initial_content(
     return initial_content
 
 
+def create_initial_tags(note_info: NoteInfo) -> list[str]:
+    tags = []
+
+    id_dir = osp.dirname(note_info.id_)
+    while id_dir != "/":
+        tags.append(clean_tag(osp.basename(id_dir)))
+        id_dir = osp.dirname(id_dir)
+    tags.reverse()
+
+    parent_dir_name = osp.basename(osp.dirname(note_info.path_str))
+    if parent_dir_name == note_info.base_filename:
+        tags.append("index")
+
+    return tags
+
+
 def create_initial_content_params(
         vim: pynvim.Nvim, note_info: NoteInfo, use_cb: bool, **kwargs
 ) -> dict[str, str]:
     params: dict[str, str] = {}
 
-    if use_cb:
-        progirl_buffer = ProGirlBuffer(vim)
-        params["TITLE"] = (
-                note_info.title if note_info.title != "" else
-                progirl_buffer.re(PATTERN_TITLE_LINE).group("TITLE")
-        )
-        params["TAGS"] = progirl_buffer.re(PATTERN_TAGS_LINE).group("TAGS")
-    else:
-        params["TITLE"] = note_info.title
-        params["TAGS"] = ""
+    # if use_cb:
+    #     # copy initial params from current buffer
+    #     progirl_buffer = ProGirlBuffer(vim)
+    #     params["TITLE"] = (
+    #             note_info.title if note_info.title != "" else
+    #             progirl_buffer.re(PATTERN_TITLE_LINE).group("TITLE")
+    #     )
+    #     params["TAGS"] = progirl_buffer.re(PATTERN_TAGS_LINE).group("TAGS")
+    # else:
+    #     params["TITLE"] = note_info.title
+    #     params["TAGS"] = ""
+
+    params["TITLE"] = note_info.title
+    params["TAGS"] = ", ".join(create_initial_tags(note_info))
+    params["TITLE_UPPER"] = params["TITLE"].upper()
+    params["NOTE_ID"] = note_info.id_
 
     params.update(kwargs)
     return params
