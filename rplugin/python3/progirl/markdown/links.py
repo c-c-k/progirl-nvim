@@ -9,7 +9,6 @@ import pynvim
 from pynvim.api import Buffer
 
 from progirl.buffer import ProGirlBuffer
-from progirl.uri import URI
 
 
 class LinksError(Exception):
@@ -231,7 +230,7 @@ def get_ref_trg_start(progirl_buffer: ProGirlBuffer) -> int:
         raise LinksError("Link targets section missing")
 
 
-def add_ref_trg(progirl_buffer: ProGirlBuffer, description: str, target: URI):
+def add_ref_trg(progirl_buffer: ProGirlBuffer, description: str, target: str):
     buffer = progirl_buffer.buffer
     # ref_trg_start = get_ref_trg_start(progirl_buffer)
     try:
@@ -246,7 +245,7 @@ def add_ref_trg(progirl_buffer: ProGirlBuffer, description: str, target: URI):
             )
     )
 
-    buffer.append(f"[{ref_trg_index}]: {target!s}")
+    buffer.append(f"[{ref_trg_index}]: {target}")
     # buffer[ref_trg_start:] = sorted(buffer[ref_trg_start:])
     ref_targets_map[ref_trg_index] = str(target)
     buffer.vars["progirl_markdown_ref_targets"] = ref_targets_map
@@ -268,7 +267,7 @@ def clean_description(description: str) -> str:
     )
 
 
-def add_ref_link(progirl_buffer: ProGirlBuffer, description: str, target: URI):
+def add_ref_link(progirl_buffer: ProGirlBuffer, description: str, target: str):
     cleaned_description = clean_description(description)
     ref_trg_index = add_ref_trg(progirl_buffer, cleaned_description, target)
     add_ref_src(progirl_buffer, cleaned_description, ref_trg_index)

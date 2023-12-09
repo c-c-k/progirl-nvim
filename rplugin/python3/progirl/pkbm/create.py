@@ -295,4 +295,11 @@ def add_note_ref_link(vim: pynvim.Nvim, title_args: list[str]):
                      True, {})
         return
 
-    md_add_ref_link(progirl_buffer, note_info.title, note_info.path_uri)
+    buffer_c_id = get_c_id_by_path(
+            resolve_path_with_context(progirl_buffer.buffer.name)
+    )
+    if note_info._c_id == buffer_c_id:
+        link_target = note_info.path_uri.body
+    else:
+        link_target = str(note_info.path_uri)
+    md_add_ref_link(progirl_buffer, note_info.title, link_target)
