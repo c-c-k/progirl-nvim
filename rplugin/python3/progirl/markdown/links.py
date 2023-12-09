@@ -239,11 +239,12 @@ def add_ref_trg(progirl_buffer: ProGirlBuffer, description: str, target: URI):
     except KeyError:
         ref_targets_map = generate_ref_targets_map(progirl_buffer.buffer)
 
-    ref_trg_index = str(min(
-            index
-            for index in range(len(ref_targets_map) + 1)
-            if str(index) not in ref_targets_map
-    ))
+    ref_trg_index = str(
+            min(
+                    index for index in range(len(ref_targets_map) + 1)
+                    if str(index) not in ref_targets_map
+            )
+    )
 
     buffer.append(f"[{ref_trg_index}]: {target!s}")
     # buffer[ref_trg_start:] = sorted(buffer[ref_trg_start:])
@@ -252,7 +253,9 @@ def add_ref_trg(progirl_buffer: ProGirlBuffer, description: str, target: URI):
     return ref_trg_index
 
 
-def add_ref_src(progirl_buffer: ProGirlBuffer, description: str, ref_trg_index: str):
+def add_ref_src(
+        progirl_buffer: ProGirlBuffer, description: str, ref_trg_index: str
+):
     vim = progirl_buffer.vim
     link_str = f"[{description}][{ref_trg_index}]"
     vim.api.put([link_str], "c", True, True)
