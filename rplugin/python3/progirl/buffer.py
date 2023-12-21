@@ -4,7 +4,7 @@ from typing import Pattern
 import pynvim
 from pynvim.api import Buffer
 
-VALID_PATH_PATTERN: Pattern = re.compile(r"^[\w./-]+$")
+_VALID_PATH_PATTERN: Pattern = re.compile(r"^[\w./-]+$")
 
 
 class ProGirlBufferRe:

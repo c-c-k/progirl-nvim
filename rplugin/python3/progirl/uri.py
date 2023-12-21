@@ -1,7 +1,7 @@
 import re
 from typing import Pattern
 
-URI_PATTERN: Pattern = re.compile(r"^([\w-]*?):(.*)$")
+_URI_PATTERN: Pattern = re.compile(r"^([\w-]*?):(.*)$")
 
 
 class URI:
@@ -10,7 +10,7 @@ class URI:
 
     def __init__(self, *uri: str):
         if len(uri) == 1:
-            uri_match = URI_PATTERN.match(uri[0])
+            uri_match = _URI_PATTERN.match(uri[0])
             if uri_match:
                 self.protocol, self.body = uri_match.groups()
             else:

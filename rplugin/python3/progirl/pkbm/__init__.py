@@ -6,10 +6,10 @@ from .create import add_note_ref_link
 from .create import create_note
 from .create import edit_note
 from .resolve import resolve_uri_as_path
-from .utils import get_collection_auto_id
-from .utils import get_dir_auto_id
 from .utils import get_c_id_by_path
+from .utils import get_collection_auto_id
 from .utils import get_collection_by_c_id
 from .utils import get_collection_by_path
 from .utils import get_current_c_id
 from .utils import get_current_collection
+from .utils import get_dir_auto_id

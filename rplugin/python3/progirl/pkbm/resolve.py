@@ -1,11 +1,10 @@
 import pynvim
 
-from progirl.path import validate_path
-from progirl.path import resolve_path_with_context
-from progirl.uri import URI
 from progirl.globals import config
-
-from .utils import get_current_collection
+from progirl.path import resolve_path_with_context
+from progirl.path import validate_path
+from progirl.pkbm.utils import get_current_collection
+from progirl.uri import URI
 
 
 def resolve_uri_as_path(

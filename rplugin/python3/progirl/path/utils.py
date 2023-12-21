@@ -1,5 +1,5 @@
-from pathlib import Path
 import os.path as osp
+from pathlib import Path
 import re
 from typing import Pattern
 

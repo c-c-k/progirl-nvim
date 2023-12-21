@@ -13,21 +13,20 @@ from progirl.markdown import add_ref_link as md_add_ref_link
 from progirl.path import get_context_pwd
 from progirl.path import resolve_path_with_context
 from progirl.path import touch_with_mkdir
+from progirl.pkbm.exceptions import CollectionError
+from progirl.pkbm.utils import get_c_id_by_path
+from progirl.pkbm.utils import get_collection_by_c_id
+from progirl.pkbm.utils import get_current_c_id
+from progirl.pkbm.utils import get_dir_auto_id
 from progirl.uri import URI
 from progirl.utils import AttrDict
 
-from progirl.pkbm.exceptions import CollectionError
-from progirl.pkbm.utils import get_current_c_id
-from progirl.pkbm.utils import get_c_id_by_path
-from progirl.pkbm.utils import get_collection_by_c_id
-from progirl.pkbm.utils import get_dir_auto_id
-
-TITLE_LEGAL_CHARACTERS = string.ascii_lowercase + string.digits + "._"
-TAG_LEGAL_CHARACTERS = string.ascii_lowercase + string.digits + "-"
-PATTERN_TAGS_LINE = re.compile(r"^[<>!-\\#/* \t]*@tags: *(?P<TAGS>.*)$")
-PATTERN_TITLE_LINE = re.compile(r"^#(?P<TITLE>[^#].*)$")
-TEMP_PROJECT_CARD_TEMPLATE = '${AUTO_ID}-${TITLE_CLEAN}'
-TEMP_PATTERN_IS_PROJECT_CARD = re.compile(r"^.*projects/.*cards/?$")
+_TITLE_LEGAL_CHARACTERS = string.ascii_lowercase + string.digits + "._"
+_TAG_LEGAL_CHARACTERS = string.ascii_lowercase + string.digits + "-"
+_PATTERN_TAGS_LINE = re.compile(r"^[<>!-\\#/* \t]*@tags: *(?P<TAGS>.*)$")
+_PATTERN_TITLE_LINE = re.compile(r"^#(?P<TITLE>[^#].*)$")
+_TEMP_PROJECT_CARD_TEMPLATE = '${AUTO_ID}-${TITLE_CLEAN}'
+_TEMP_PATTERN_IS_PROJECT_CARD = re.compile(r"^.*projects/.*cards/?$")
 
 
 class NoteInfo:
@@ -117,14 +116,14 @@ class NoteInfo:
     def _resolve_extension(self):
         if self.extension == "":
             self.extension = self.collection.extension
-        self.extension = clean_title(self.extension.lstrip("."))
+        self.extension = _clean_title(self.extension.lstrip("."))
 
     def _create_title(self):
         self.title = " ".join(self._title_args)
 
     def _create_filename(self):
-        if TEMP_PATTERN_IS_PROJECT_CARD.match(self._dir_path_str):
-            template_str = TEMP_PROJECT_CARD_TEMPLATE
+        if _TEMP_PATTERN_IS_PROJECT_CARD.match(self._dir_path_str):
+            template_str = _TEMP_PROJECT_CARD_TEMPLATE
         else:
             template_str = self.collection.filename_template
 
@@ -143,7 +142,7 @@ class NoteInfo:
 
     def _create_filename_params(self, use_auto_id: bool) -> dict[str, str]:
         params = {}
-        params["TITLE_CLEAN"] = clean_title(self.title)
+        params["TITLE_CLEAN"] = _clean_title(self.title)
         if use_auto_id:
             # params["AUTO_ID"] = get_collection_auto_id(self._c_id)
             params["AUTO_ID"] = get_dir_auto_id(self._dir_path_str)
@@ -160,19 +159,19 @@ class NoteInfo:
         return self.path_uri.body
 
 
-def clean_tag(name: str) -> str:
+def _clean_tag(name: str) -> str:
     return _clean_string(
             name=name,
-            valid_chars=TAG_LEGAL_CHARACTERS,
+            valid_chars=_TAG_LEGAL_CHARACTERS,
             filler_char="-",
             preprocessor=lambda s: s.lower()
     )
 
 
-def clean_title(name: str) -> str:
+def _clean_title(name: str) -> str:
     return _clean_string(
             name=name,
-            valid_chars=TITLE_LEGAL_CHARACTERS,
+            valid_chars=_TITLE_LEGAL_CHARACTERS,
             filler_char="_",
             preprocessor=lambda s: s.lower()
     )
@@ -213,13 +212,13 @@ def create_note(
         vim.api.echo([[f"can not create file {note_info.path_str}"]], True, {})
         return None
 
-    initial_content = create_initial_content(vim, note_info, use_cb)
+    initial_content = _create_initial_content(vim, note_info, use_cb)
     Path(note_info.path_str).write_text(initial_content)
 
     return note_info
 
 
-def create_initial_content(
+def _create_initial_content(
         vim: pynvim.Nvim, note_info: NoteInfo, use_cb: bool, **kwargs
 ) -> str:
     template_path = note_info.collection.default_template
@@ -229,17 +228,17 @@ def create_initial_content(
     else:
         template_str = ""
     template = string.Template(template_str)
-    params = create_initial_content_params(vim, note_info, use_cb, **kwargs)
+    params = _create_initial_content_params(vim, note_info, use_cb, **kwargs)
     initial_content = template.safe_substitute(params)
     return initial_content
 
 
-def create_initial_tags(note_info: NoteInfo) -> list[str]:
+def _create_initial_tags(note_info: NoteInfo) -> list[str]:
     tags = []
 
     id_dir = osp.dirname(note_info.id_)
     while id_dir != "/":
-        tags.append(clean_tag(osp.basename(id_dir)))
+        tags.append(_clean_tag(osp.basename(id_dir)))
         id_dir = osp.dirname(id_dir)
     tags.reverse()
 
@@ -250,7 +249,7 @@ def create_initial_tags(note_info: NoteInfo) -> list[str]:
     return tags
 
 
-def create_initial_content_params(
+def _create_initial_content_params(
         vim: pynvim.Nvim, note_info: NoteInfo, use_cb: bool, **kwargs
 ) -> dict[str, str]:
     params: dict[str, str] = {}
@@ -268,7 +267,7 @@ def create_initial_content_params(
     #     params["TAGS"] = ""
 
     params["TITLE"] = note_info.title
-    params["TAGS"] = ", ".join(create_initial_tags(note_info))
+    params["TAGS"] = ", ".join(_create_initial_tags(note_info))
     params["TITLE_UPPER"] = params["TITLE"].upper()
     params["NOTE_ID"] = note_info.id_
 

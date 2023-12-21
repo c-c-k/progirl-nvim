@@ -2,21 +2,21 @@ from importlib import import_module
 
 import pynvim
 
-from progirl.path import validate_path
 from progirl.path import resolve_path_with_context
+from progirl.path import validate_path
 from progirl.uri import URI
 
-DEFAULT_RESOLVER_PROTOCOLS: list[str] = ["file", "local", ""]
+_DEFAULT_RESOLVER_PROTOCOLS: list[str] = ["file", "local", ""]
 
 
-def default_resolver(uri: URI, context_pwd: str | None) -> str | None:
-    if uri.protocol in DEFAULT_RESOLVER_PROTOCOLS:
+def _default_resolver(uri: URI, context_pwd: str | None) -> str | None:
+    if uri.protocol in _DEFAULT_RESOLVER_PROTOCOLS:
         path = resolve_path_with_context(uri.body, context_pwd)
         return validate_path(path)
     return None
 
 
-def try_resolve(
+def _try_resolve(
         vim: pynvim.Nvim, resolver: str, uri: URI, context_pwd: str | None
 ) -> str | None:
     resolver_module_name, resolver_function_name = \
@@ -34,9 +34,9 @@ def resolve_uri_as_path(
     path = None
     uri_resolvers = vim.vars.get("progirl_uri_resolvers", [])
     for resolver in uri_resolvers:
-        path = try_resolve(vim, resolver, uri, context_pwd)
+        path = _try_resolve(vim, resolver, uri, context_pwd)
         if path is not None:
             break
     if path is None:
-        path = default_resolver(uri, context_pwd)
+        path = _default_resolver(uri, context_pwd)
     return path

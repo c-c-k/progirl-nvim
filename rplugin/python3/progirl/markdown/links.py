@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from enum import auto
 from enum import Enum
 import re
@@ -76,8 +77,8 @@ class Link:
         return self.end - self.start
 
 
-INVALID_LINK_DESCRIPTION_CHARS = "[]"
-LINK_PATTERNS: list[LinkPattern] = [
+_INVALID_LINK_DESCRIPTION_CHARS = "[]"
+_LINK_PATTERNS: list[LinkPattern] = [
         # ref_target link ("^[name]: target")
         LinkPattern(
                 pattern=re.compile(r"^\[(?P<name>[^]]+)\]: (?P<target>.*)"),
@@ -126,8 +127,8 @@ LINK_PATTERNS: list[LinkPattern] = [
 ]
 
 
-def find_link(line: str,
-              link_patterns: list[LinkPattern]) -> tuple[Link | None, bool]:
+def _find_link(line: str,
+               link_patterns: list[LinkPattern]) -> tuple[Link | None, bool]:
     link = None
     for link_pattern in link_patterns:
         link_match = link_pattern.pattern.search(line)
@@ -137,31 +138,31 @@ def find_link(line: str,
     return link, link_pattern.full_line_link
 
 
-def replace_link_with_blanks(line: str, link: Link) -> str:
+def _replace_link_with_blanks(line: str, link: Link) -> str:
     new_line = line[:link.start] + ' ' * len(link)
     if link.end < len(line):
         new_line += line[link.end:]
     return new_line
 
 
-def extract_links_from_line(line: str) -> list[Link]:
+def _extract_links_from_line(line: str) -> list[Link]:
     links = []
     while True:
-        link, full_line_link_found = find_link(line, LINK_PATTERNS)
+        link, full_line_link_found = _find_link(line, _LINK_PATTERNS)
 
         if link is not None:
             links.append(link)
             if full_line_link_found:
                 break
             else:
-                line = replace_link_with_blanks(line, link)
+                line = _replace_link_with_blanks(line, link)
                 continue
 
         break
     return links
 
 
-def get_ref_target(buffer: Buffer, src_target: str) -> str:
+def _get_ref_target(buffer: Buffer, src_target: str) -> str:
     ref_targets_map = buffer.vars.get("progirl_markdown_ref_targets", {})
     ref_target = ref_targets_map.get(src_target, None)
     if ref_target is None:
@@ -170,9 +171,9 @@ def get_ref_target(buffer: Buffer, src_target: str) -> str:
     return ref_target
 
 
-def resolve_link(buffer: Buffer, link: Link) -> Link | None:
+def _resolve_link(buffer: Buffer, link: Link) -> Link | None:
     if link.ref_type is LinkRefType.REF_SOURCE:
-        ref_target = get_ref_target(buffer, link.target)
+        ref_target = _get_ref_target(buffer, link.target)
         if ref_target is None:
             resolved_link = None
         else:
@@ -183,15 +184,15 @@ def resolve_link(buffer: Buffer, link: Link) -> Link | None:
     return resolved_link
 
 
-def get_link_at_cursor(vim: pynvim.Nvim) -> Link | None:
+def _get_link_at_cursor(vim: pynvim.Nvim) -> Link | None:
     line = vim.current.line
-    links = extract_links_from_line(line)
+    links = _extract_links_from_line(line)
     link_at_cursor = None
     if links is not None:
         cursor_col = vim.current.window.cursor[1]
         for link in links:
             if link.start <= cursor_col < link.end:
-                link_at_cursor = resolve_link(vim.current.buffer, link)
+                link_at_cursor = _resolve_link(vim.current.buffer, link)
                 break
     return link_at_cursor
 
@@ -202,11 +203,11 @@ def generate_ref_targets_map(buffer: Buffer) -> dict[str, str]:
     # and returns it, which can all be considered separate responsibilities.
     ref_targets_map = {}
     link_patterns = [
-            link_pattern for link_pattern in LINK_PATTERNS
+            link_pattern for link_pattern in _LINK_PATTERNS
             if link_pattern.ref_type == LinkRefType.REF_TARGET
     ]
     for line in buffer:
-        link, _ = find_link(line, link_patterns)
+        link, _ = _find_link(line, link_patterns)
         if link is not None:
             ref_targets_map[link.name] = link.target
     buffer.vars["progirl_markdown_ref_targets"] = ref_targets_map
@@ -214,7 +215,7 @@ def generate_ref_targets_map(buffer: Buffer) -> dict[str, str]:
 
 
 def get_uri_at_cursor(vim: pynvim.Nvim) -> str | None:
-    link = get_link_at_cursor(vim)
+    link = _get_link_at_cursor(vim)
     if link is None:
         uri = None
     else:
@@ -222,7 +223,7 @@ def get_uri_at_cursor(vim: pynvim.Nvim) -> str | None:
     return uri
 
 
-def get_ref_trg_start(progirl_buffer: ProGirlBuffer) -> int:
+def _get_ref_trg_start(progirl_buffer: ProGirlBuffer) -> int:
     buffer = progirl_buffer.buffer
     try:
         return buffer[:].index("<!--LINK TARGETS-->") + 1
@@ -230,7 +231,7 @@ def get_ref_trg_start(progirl_buffer: ProGirlBuffer) -> int:
         raise LinksError("Link targets section missing")
 
 
-def add_ref_trg(progirl_buffer: ProGirlBuffer, description: str, target: str):
+def _add_ref_trg(progirl_buffer: ProGirlBuffer, description: str, target: str):
     buffer = progirl_buffer.buffer
     # ref_trg_start = get_ref_trg_start(progirl_buffer)
     try:
@@ -252,7 +253,7 @@ def add_ref_trg(progirl_buffer: ProGirlBuffer, description: str, target: str):
     return ref_trg_index
 
 
-def add_ref_src(
+def _add_ref_src(
         progirl_buffer: ProGirlBuffer, description: str, ref_trg_index: str
 ):
     vim = progirl_buffer.vim
@@ -260,14 +261,14 @@ def add_ref_src(
     vim.api.put([link_str], "c", True, True)
 
 
-def clean_description(description: str) -> str:
+def _clean_description(description: str) -> str:
     return "".join(
             char for char in description
-            if char not in INVALID_LINK_DESCRIPTION_CHARS
+            if char not in _INVALID_LINK_DESCRIPTION_CHARS
     )
 
 
 def add_ref_link(progirl_buffer: ProGirlBuffer, description: str, target: str):
-    cleaned_description = clean_description(description)
-    ref_trg_index = add_ref_trg(progirl_buffer, cleaned_description, target)
-    add_ref_src(progirl_buffer, cleaned_description, ref_trg_index)
+    cleaned_description = _clean_description(description)
+    ref_trg_index = _add_ref_trg(progirl_buffer, cleaned_description, target)
+    _add_ref_src(progirl_buffer, cleaned_description, ref_trg_index)

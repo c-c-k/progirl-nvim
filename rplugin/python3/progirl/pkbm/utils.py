@@ -4,8 +4,8 @@ from time import sleep
 
 import pynvim
 
-from progirl.path import resolve_path_with_context
 from progirl.globals import config
+from progirl.path import resolve_path_with_context
 from progirl.pkbm.exceptions import CollectionError
 from progirl.utils import AttrDict
 
@@ -14,16 +14,16 @@ def get_collection_auto_id(c_id: str) -> str:
     collection = get_collection_by_c_id(c_id)
     c_path = Path(collection.path)
     id_file_path = c_path.joinpath(".pkb/next_id")
-    return get_auto_id(id_file_path)
+    return _get_auto_id(id_file_path)
 
 
 def get_dir_auto_id(dir_path_str: str) -> str:
     dir_path = Path(dir_path_str)
     id_file_path = dir_path.joinpath(".next_id")
-    return get_auto_id(id_file_path)
+    return _get_auto_id(id_file_path)
 
 
-def get_auto_id(id_file_path: Path) -> str:
+def _get_auto_id(id_file_path: Path) -> str:
     id_temp_file_path = Path(id_file_path.as_posix() + "~")
 
     if not id_file_path.exists() and not id_temp_file_path.exists():

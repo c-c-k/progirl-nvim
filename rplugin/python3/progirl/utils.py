@@ -1,4 +1,5 @@
-from typing import Callable, Any
+from typing import Any
+from typing import Callable
 
 
 class AttrDict(dict):

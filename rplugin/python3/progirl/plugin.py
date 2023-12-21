@@ -1,12 +1,12 @@
 import pynvim
 
-from progirl.uri import URI
-from progirl.markdown.links import generate_ref_targets_map
-from progirl.goto import goto_file_at_cursor
 from progirl.goto import goto_ex_at_cursor
-from progirl.pkbm import load_config
+from progirl.goto import goto_file_at_cursor
+from progirl.markdown import generate_ref_targets_map
 from progirl.pkbm import add_note_ref_link
 from progirl.pkbm import edit_note
+from progirl.pkbm import load_config
+from progirl.uri import URI
 
 
 @pynvim.plugin

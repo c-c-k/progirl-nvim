@@ -5,8 +5,8 @@ import pynvim
 
 from progirl.globals import config
 from progirl.path import resolve_path_with_context
+from progirl.pkbm.exceptions import CollectionError
 from progirl.utils import AttrDict
-from .exceptions import CollectionError
 
 _DEFAULT_COLLECTION = {
         "name": "default",
@@ -28,12 +28,12 @@ def load_config(vim: pynvim.Nvim):
     config.clear()
 
     config.pkb_prefix = vim.vars.get("progirl_pkb_prefix", "pkb-")
-    load_collections_config(vim)
+    _load_collections_config(vim)
 
     return config
 
 
-def load_c_config(raw_collection: dict) -> AttrDict:
+def _load_c_config(raw_collection: dict) -> AttrDict:
     collection = AttrDict(deepcopy(_DEFAULT_COLLECTION))
     collection.update(raw_collection)
 
@@ -92,20 +92,20 @@ def get_c_id(collection: AttrDict) -> str:
     return config.pkb_prefix + c_name
 
 
-def load_collections_config(vim: pynvim.Nvim):
+def _load_collections_config(vim: pynvim.Nvim):
     collections_list = vim.vars.get("progirl_collections", [])
 
     if collections_list != []:
         collections = {
                 collection._id: collection
                 for collection in (
-                        load_c_config(raw_collection)
+                        _load_c_config(raw_collection)
                         for raw_collection in collections_list
                 )
         }
         active_c_name = collections_list[0]["name"]
     else:
-        default_collection = load_c_config({})
+        default_collection = _load_c_config({})
         collections = {default_collection._id: default_collection}
         active_c_name = default_collection["name"]
 
